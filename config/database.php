@@ -1,4 +1,5 @@
 <?php
+
 return [
     'driver' => 'mysql',
     'host' => $_ENV['DB_HOST'],
