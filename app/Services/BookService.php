@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Database;
+use App\Models\Book;
 use PDO;
 
 class BookService
@@ -17,9 +18,23 @@ class BookService
     // Получить книги пользователя
     public function getUserBooks($userId)
     {
-        $stmt = $this->db->prepare("SELECT id, title FROM books WHERE user_id = :user_id AND deleted_at IS NULL");
+        $stmt = $this->db->prepare("SELECT * FROM books WHERE user_id = :user_id AND deleted_at IS NULL");
         $stmt->execute(['user_id' => $userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $booksData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $books = [];
+        foreach ($booksData as $bookData) {
+            $book = new Book(
+                $bookData['id'],
+                $bookData['user_id'],
+                $bookData['title'],
+                null, // Исключаем текст для списка
+                $bookData['deleted_at']
+            );
+            $books[] = $book;
+        }
+
+        return $books;
     }
 
     // Создать новую книгу
@@ -36,12 +51,24 @@ class BookService
     // Получить книгу по ID
     public function getBookById($userId, $bookId)
     {
-        $stmt = $this->db->prepare("SELECT id, title, text FROM books WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL");
+        $stmt = $this->db->prepare("SELECT * FROM books WHERE id = :id AND user_id = :user_id");
         $stmt->execute([
             'id' => $bookId,
             'user_id' => $userId,
         ]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $bookData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($bookData) {
+            return new Book(
+                $bookData['id'],
+                $bookData['user_id'],
+                $bookData['title'],
+                $bookData['text'],
+                $bookData['deleted_at']
+            );
+        }
+
+        return null;
     }
 
     // Обновить книгу
@@ -95,8 +122,22 @@ class BookService
         }
 
         // Получаем книги другого пользователя
-        $stmt = $this->db->prepare("SELECT id, title FROM books WHERE user_id = :user_id AND deleted_at IS NULL");
+        $stmt = $this->db->prepare("SELECT * FROM books WHERE user_id = :user_id AND deleted_at IS NULL");
         $stmt->execute(['user_id' => $otherUserId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $booksData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $books = [];
+        foreach ($booksData as $bookData) {
+            $book = new Book(
+                $bookData['id'],
+                $bookData['user_id'],
+                $bookData['title'],
+                null, // Исключаем текст для списка
+                $bookData['deleted_at']
+            );
+            $books[] = $book;
+        }
+
+        return $books;
     }
 }

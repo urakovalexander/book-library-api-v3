@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\ExternalBookService;
+use App\Models\Book;
 
 class ExternalBookController
 {
@@ -19,7 +20,7 @@ class ExternalBookController
         $this->userId = $userId;
     }
 
-    // Поиск книг по внешнему API
+    // Поиск книг
     public function search()
     {
         $query = $_GET['q'] ?? '';
@@ -32,24 +33,34 @@ class ExternalBookController
 
         $books = $this->externalBookService->searchBooks($query);
 
-        echo json_encode($books);
+        // Преобразуем объекты Book в массивы для JSON
+        $booksArray = array_map(function (Book $book) {
+            return [
+                'id'          => $book->getId(),
+                'title'       => $book->getTitle(),
+                'description' => $book->getText(),
+            ];
+        }, $books);
+
+        echo json_encode($booksArray);
     }
 
-    // Сохранить найденную книгу
+    // Сохранение найденной книги
     public function save()
     {
         $data = json_decode(file_get_contents('php://input'), true);
-        $bookId = $data['id'] ?? '';
-        $title = $data['title'] ?? '';
-        $text = $data['description'] ?? '';
 
-        if (empty($bookId) || empty($title)) {
+        if (empty($data['title'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Book ID and title are required']);
+            echo json_encode(['error' => 'Title is required']);
             return;
         }
 
-        $result = $this->externalBookService->saveBook($this->userId, $bookId, $title, $text);
+        $book = new Book();
+        $book->setTitle($data['title']);
+        $book->setText($data['description'] ?? '');
+
+        $result = $this->externalBookService->saveBook($this->userId, $book);
 
         if ($result) {
             http_response_code(201);

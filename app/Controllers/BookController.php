@@ -23,7 +23,16 @@ class BookController
     public function list()
     {
         $books = $this->bookService->getUserBooks($this->userId);
-        echo json_encode($books);
+
+        // Преобразуем модели книг в массивы для кодирования в JSON
+        $booksArray = array_map(function ($book) {
+            return [
+                'id' => $book->getId(),
+                'title' => $book->getTitle(),
+            ];
+        }, $books);
+
+        echo json_encode($booksArray);
     }
 
     // Создать новую книгу
@@ -38,7 +47,7 @@ class BookController
             return;
         }
 
-        // Обработка загруженного файла
+        // Обработка загруженного файла, если предоставлен
         if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
             $fileContent = file_get_contents($_FILES['file']['tmp_name']);
             $text = $fileContent;
@@ -61,7 +70,11 @@ class BookController
         $book = $this->bookService->getBookById($this->userId, $id);
 
         if ($book) {
-            echo json_encode($book);
+            echo json_encode([
+                'id' => $book->getId(),
+                'title' => $book->getTitle(),
+                'text' => $book->getText(),
+            ]);
         } else {
             http_response_code(404);
             echo json_encode(['error' => 'Book not found']);
@@ -123,7 +136,15 @@ class BookController
         $books = $this->bookService->getBooksByUser($this->userId, $otherUserId);
 
         if ($books !== false) {
-            echo json_encode($books);
+            // Преобразуем модели книг в массивы для кодирования в JSON
+            $booksArray = array_map(function ($book) {
+                return [
+                    'id' => $book->getId(),
+                    'title' => $book->getTitle(),
+                ];
+            }, $books);
+
+            echo json_encode($booksArray);
         } else {
             http_response_code(403);
             echo json_encode(['error' => 'Access denied']);

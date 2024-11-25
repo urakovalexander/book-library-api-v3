@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Library API Test Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h2 {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 10px;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            overflow: auto;
+        }
+        .response {
+            margin-top: 10px;
+        }
+        /* Стили для скрытия разделов */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Book Library API Test Interface</h1>
+
+<div id="authSection">
+    <div class="section" id="registration">
+        <h2>1. Регистрация пользователя</h2>
+        <label>Username:</label>
+        <input type="text" id="registerUsername">
+        <label>Password:</label>
+        <input type="password" id="registerPassword">
+        <label>Confirm Password:</label>
+        <input type="password" id="registerConfirmPassword">
+        <button onclick="register()">Register</button>
+        <div class="response" id="registerResponse"></div>
+    </div>
+
+    <div class="section" id="login">
+        <h2>2. Авторизация пользователя</h2>
+        <label>Username:</label>
+        <input type="text" id="loginUsername">
+        <label>Password:</label>
+        <input type="password" id="loginPassword">
+        <button onclick="login()">Login</button>
+        <div class="response" id="loginResponse"></div>
+    </div>
+</div>
+
+<!-- Защищённые разделы -->
+<div id="protectedSections" class="hidden">
+
+    <h2>Добро пожаловать!</h2>
+    <p>Вы вошли в систему. Теперь вам доступны следующие функции:</p>
+
+    <div class="section" id="usersList">
+        <h2>3. Получение списка пользователей</h2>
+        <button onclick="getUsers()">Get Users</button>
+        <div class="response" id="usersResponse"></div>
+    </div>
+
+    <div class="section" id="grantAccess">
+        <h2>4. Предоставление доступа к библиотеке</h2>
+        <label>User ID to grant access:</label>
+        <input type="number" id="grantUserId">
+        <button onclick="grantAccess()">Grant Access</button>
+        <div class="response" id="grantAccessResponse"></div>
+    </div>
+
+    <div class="section" id="createBook">
+        <h2>5. Создание книги</h2>
+        <label>Title:</label>
+        <input type="text" id="bookTitle">
+        <label>Text:</label>
+        <textarea id="bookText"></textarea>
+        <button onclick="createBook()">Create Book</button>
+        <div class="response" id="createBookResponse"></div>
+    </div>
+
+    <div class="section" id="myBooks">
+        <h2>6. Получение списка своих книг</h2>
+        <button onclick="getMyBooks()">Get My Books</button>
+        <div class="response" id="myBooksResponse"></div>
+    </div>
+
+    <div class="section" id="viewBook">
+        <h2>7. Открытие книги по ID</h2>
+        <label>Book ID:</label>
+        <input type="number" id="viewBookId">
+        <button onclick="viewBook()">View Book</button>
+        <div class="response" id="viewBookResponse"></div>
+    </div>
+
+    <div class="section" id="updateBook">
+        <h2>8. Обновление книги</h2>
+        <label>Book ID:</label>
+        <input type="number" id="updateBookId">
+        <label>New Title:</label>
+        <input type="text" id="updateBookTitle">
+        <label>New Text:</label>
+        <textarea id="updateBookText"></textarea>
+        <button onclick="updateBook()">Update Book</button>
+        <div class="response" id="updateBookResponse"></div>
+    </div>
+
+    <div class="section" id="deleteBook">
+        <h2>9. Удаление книги</h2>
+        <label>Book ID:</label>
+        <input type="number" id="deleteBookId">
+        <button onclick="deleteBook()">Delete Book</button>
+        <div class="response" id="deleteBookResponse"></div>
+    </div>
+
+    <div class="section" id="restoreBook">
+        <h2>10. Восстановление книги</h2>
+        <label>Book ID:</label>
+        <input type="number" id="restoreBookId">
+        <button onclick="restoreBook()">Restore Book</button>
+        <div class="response" id="restoreBookResponse"></div>
+    </div>
+
+    <div class="section" id="otherUserBooks">
+        <h2>11. Получение списка книг другого пользователя</h2>
+        <label>User ID:</label>
+        <input type="number" id="otherUserId">
+        <button onclick="getOtherUserBooks()">Get User's Books</button>
+        <div class="response" id="otherUserBooksResponse"></div>
+    </div>
+
+    <div class="section" id="searchBooks">
+        <h2>12. Поиск книг через внешний API</h2>
+        <label>Search Query:</label>
+        <input type="text" id="searchQuery">
+        <button onclick="searchBooks()">Search Books</button>
+        <div class="response" id="searchBooksResponse"></div>
+    </div>
+
+    <div class="section" id="saveBook">
+        <h2>13. Сохранение найденной книги</h2>
+        <label>Book ID:</label>
+        <input type="text" id="saveBookId">
+        <label>Title:</label>
+        <input type="text" id="saveBookTitle">
+        <label>Description:</label>
+        <textarea id="saveBookDescription"></textarea>
+        <button onclick="saveBook()">Save Book</button>
+        <div class="response" id="saveBookResponse"></div>
+    </div>
+
+    <!-- Кнопка выхода из системы -->
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+    let token = '';
+
+    // Проверяем, есть ли токен в localStorage
+    if (localStorage.getItem('token')) {
+        token = localStorage.getItem('token');
+        showProtectedSections();
+    }
+
+    function displayResponse(elementId, data) {
+        document.getElementById(elementId).innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+    }
+
+    function register() {
+        const username = document.getElementById('registerUsername').value;
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: username, password: password, confirm_password: confirmPassword })
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('registerResponse', result.body);
+                if (result.status === 201 && result.body.token) {
+                    token = result.body.token;
+                    localStorage.setItem('token', token);
+                    alert('Регистрация успешна. Токен сохранён.');
+                    showProtectedSections();
+                } else {
+                    alert('Ошибка регистрации: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Произошла ошибка при регистрации.');
+            });
+    }
+
+    function login() {
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: username, password: password })
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('loginResponse', result.body);
+                if (result.status === 200 && result.body.token) {
+                    token = result.body.token;
+                    localStorage.setItem('token', token);
+                    alert('Вход успешен. Токен сохранён.');
+                    showProtectedSections();
+                } else {
+                    alert('Ошибка входа: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Произошла ошибка при авторизации.');
+            });
+    }
+
+    function showProtectedSections() {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('protectedSections').classList.remove('hidden');
+    }
+
+    function logout() {
+        token = '';
+        localStorage.removeItem('token');
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('protectedSections').classList.add('hidden');
+        alert('Вы вышли из системы.');
+    }
+
+    // Функции для защищённых эндпоинтов
+    function getUsers() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        fetch('/users', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                displayResponse('usersResponse', data);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при получении списка пользователей.');
+            });
+    }
+
+    function grantAccess() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const userId = document.getElementById('grantUserId').value;
+
+        fetch('/grant-access', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                displayResponse('grantAccessResponse', data);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при предоставлении доступа.');
+            });
+    }
+
+    function createBook() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const title = document.getElementById('bookTitle').value;
+        const text = document.getElementById('bookText').value;
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('text', text);
+
+        fetch('/books', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            body: formData
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('createBookResponse', result.body);
+                if (result.status === 201) {
+                    alert('Книга успешно создана.');
+                } else {
+                    alert('Ошибка при создании книги: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при создании книги.');
+            });
+    }
+
+    function getMyBooks() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        fetch('/books', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                displayResponse('myBooksResponse', data);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при получении списка книг.');
+            });
+    }
+
+    function viewBook() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const bookId = document.getElementById('viewBookId').value;
+
+        fetch('/books/' + bookId, {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                if (response.status === 200) {
+                    return response.json();
+                } else {
+                    return response.json().then(function(data) {
+                        throw new Error(data.error || 'Ошибка при получении книги.');
+                    });
+                }
+            })
+            .then(function(data) {
+                displayResponse('viewBookResponse', data);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+    }
+
+    function updateBook() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const bookId = document.getElementById('updateBookId').value;
+        const title = document.getElementById('updateBookTitle').value;
+        const text = document.getElementById('updateBookText').value;
+
+        fetch('/books/' + bookId, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ title: title, text: text })
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('updateBookResponse', result.body);
+                if (result.status === 200) {
+                    alert('Книга успешно обновлена.');
+                } else {
+                    alert('Ошибка при обновлении книги: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при обновлении книги.');
+            });
+    }
+
+    function deleteBook() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const bookId = document.getElementById('deleteBookId').value;
+
+        fetch('/books/' + bookId, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('deleteBookResponse', result.body);
+                if (result.status === 200) {
+                    alert('Книга успешно удалена.');
+                } else {
+                    alert('Ошибка при удалении книги: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при удалении книги.');
+            });
+    }
+
+    function restoreBook() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const bookId = document.getElementById('restoreBookId').value;
+
+        fetch('/books/' + bookId + '/restore', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('restoreBookResponse', result.body);
+                if (result.status === 200) {
+                    alert('Книга успешно восстановлена.');
+                } else {
+                    alert('Ошибка при восстановлении книги: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при восстановлении книги.');
+            });
+    }
+
+    function getOtherUserBooks() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const userId = document.getElementById('otherUserId').value;
+
+        fetch('/users/' + userId + '/books', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                if (response.status === 200) {
+                    return response.json();
+                } else {
+                    return response.json().then(function(data) {
+                        throw new Error(data.error || 'Ошибка при получении книг пользователя.');
+                    });
+                }
+            })
+            .then(function(data) {
+                displayResponse('otherUserBooksResponse', data);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+    }
+
+    function searchBooks() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const query = document.getElementById('searchQuery').value;
+
+        fetch('/search-books?q=' + encodeURIComponent(query), {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('searchBooksResponse', result.body);
+                if (result.status !== 200) {
+                    alert('Ошибка при поиске книг: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при поиске книг.');
+            });
+    }
+
+    function saveBook() {
+        if (!token) {
+            alert('Пожалуйста, войдите в систему.');
+            return;
+        }
+        const id = document.getElementById('saveBookId').value;
+        const title = document.getElementById('saveBookTitle').value;
+        const description = document.getElementById('saveBookDescription').value;
+
+        fetch('/save-book', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ id: id, title: title, description: description })
+        })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, body: data };
+                });
+            })
+            .then(function(result) {
+                displayResponse('saveBookResponse', result.body);
+                if (result.status === 201) {
+                    alert('Книга успешно сохранена.');
+                } else {
+                    alert('Ошибка при сохранении книги: ' + (result.body.error || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Ошибка при сохранении книги.');
+            });
+    }
+
+</script>
+
+</body>
+</html>

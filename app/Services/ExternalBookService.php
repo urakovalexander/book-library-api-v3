@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Database;
+use App\Models\Book;
 use PDO;
 
 class ExternalBookService
@@ -30,11 +31,12 @@ class ExternalBookService
 
         if (isset($data['items'])) {
             foreach ($data['items'] as $item) {
-                $books[] = [
-                    'id' => $item['id'] ?? null,
-                    'title' => $item['volumeInfo']['title'] ?? 'No Title',
-                    'description' => $item['volumeInfo']['description'] ?? '',
-                ];
+                $book = new Book();
+                $book->setId($item['id'] ?? null);
+                $book->setTitle($item['volumeInfo']['title'] ?? 'No Title');
+                $book->setText($item['volumeInfo']['description'] ?? '');
+
+                $books[] = $book;
             }
         }
 
@@ -42,13 +44,13 @@ class ExternalBookService
     }
 
     // Сохранить найденную книгу в базу данных
-    public function saveBook($userId, $bookId, $title, $text)
+    public function saveBook($userId, Book $book)
     {
         $stmt = $this->db->prepare("INSERT INTO books (user_id, title, text) VALUES (:user_id, :title, :text)");
         return $stmt->execute([
             'user_id' => $userId,
-            'title' => $title,
-            'text' => $text,
+            'title'   => $book->getTitle(),
+            'text'    => $book->getText(),
         ]);
     }
 }

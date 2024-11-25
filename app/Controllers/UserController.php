@@ -21,12 +21,19 @@ class UserController
 
     public function list()
     {
-        // Получаем список пользователей через UserService
         $users = $this->userService->getAllUsers();
 
-        // Возвращаем данные в формате JSON
-        echo json_encode($users);
+        // Преобразуем модели пользователей в массивы для кодирования в JSON
+        $usersArray = array_map(function ($user) {
+            return [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
+            ];
+        }, $users);
+
+        echo json_encode($usersArray);
     }
+
 
     public function grantAccess()
     {
